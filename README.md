@@ -1,4 +1,4 @@
-<p align="center"><img width=60% src="images/customer_churn.png"></p>
+<p align="center"><img width=60% src="images/customer_remarketing.png"></p>
 
 <p align="center" style="color:DodgerBlue; font-family:cambria; font-variant: normal; font-size:20pt; font-weight:bold; font-weight: 900">CUSTOMER REMARKETING 
 </p>
