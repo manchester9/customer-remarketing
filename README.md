@@ -8,40 +8,47 @@
 # **Table Of Contents**
 
 ### **Background**
-- A top tier bank is having a problem retaining their customers. They are looking for someone to help them predict the customers that are going to churn so they can   proactively connect with the customer and provide relevant personalized messaging to reduce the Churn Rate
+- A top tier Portuguese bank aims to promote a marketing campaign with existing customers to increase their term deposits. A similar campaign that was run last quarter showed an average single-digit conversion rate. In the last town hall, the marketing head wants the analytics team to come up with an effective remarketing model to increase the conversion ratio to double-digit with same budget as per the last campaign
 
 ### **Challenge**
-- Build a classification model to identify customers that have a high probability of churning
+- Build a classification model to identify customers that have a high probability of converting into depositors based on their historical transaction history
 - Ensure train and deployment pipelines are created separately to mirror real world scenarios
+- Automate entire workflow with relevant technologies 
 - Create each ML stage as a reusable component
 - Automate entire workflow with relevant technologies
 
 ### **Requirements**
-- Input file with historical data is uploaded to an input_folder on GCS for training our model
-- Weekly file with additional data is uploaded to a weekly_folder on GCS for us to apply our trained model
-- Output file with probability scores for each customer is posted in the output_folder on GCS
-- Trigger main pipeline from most recent weekly file uploaded to GCS weekly_folder 
-- The main pipeline uses the latest training image to deploy the model object and apply it to the new weekly file
+- `Input data` folder on GCS has the latest historical data for training
+- `Weekly data` folder is created to receive weekly files that need to be scored 
+- `Output data` folder is created to receive output files with probability scores for each customer
+- Trigger training pipeline when new input data file is added to a GCS folder. Output of the training pipeline is a final model object placed in a GCS folder called `Model output`
+- Trigger deploy pipeline when new weekly file is submitted to the frontend UI built with Streamlit 
+    - Use the FastAPI frontend web endpoint in conjunction with google cloud  storage to upload the file to a GCS bucket 
+    - Deploy the model using k-serve [Load, create deployment specifications, dockerization, push to GCR, deploy on Kubernetes, generate predictions, & save on GCS bucket]
+    - Return status on frontend UI
+      return {"status": "success", "predictions URL": predictions_URL}
+- Visualization of pipeline can be done in Kubeflow
 
 ### **Additional scope**
 - Track metrics of deployed model using Grafana and Prometheus
 - Integrate MLFlow into the Kubeflow pipelines for model registry and metadata store
 - Include explainability concepts using SHAP
-- Deploy cloud functions using Terraform for futher automation of pipeline 
+- Deploy GCP infrastructure using Terraform for futher automation of pipeline 
 
 ### **High level architecture**
 <p align="center"><img width=60% src="images/customer_churn_architecture.png"></p>
 
+### **Implementation plan for the above architecture** 
 - Experiment in notebook to train-test-evaluate historical data in GCS 
-- Create separate classes, and function script files
-- Create a kubeflow training and deployment pipeline including all classes, functions
-- Create a cloud storage trigger 01 and function 01 to invoke the main pipeline
-- Main pipeline is invoked by cloud function 01 when a new weekly batch file is uploaded to weekly data folder
-- The main pipeline kicks of the training pipeline [Need to add logic that if the training pipeline image hasnt changed dont need to kick it off] 
-- Deployment pipeline is invoked by cloud function 02 when a new final model object is uploaded to a GCS bucket 
-- Model is deployed on Kubernetes using Seldon and applied to the weekly batch extract on GCS
-- Output of the scored file is stored in the GCS bucket to be used by the marketing team
-- The processing steps of the pipeline can be monitored within Vertex AI or the Kubeflow UI 
+- Create separate classes, functions script files
+- Create a sklearn training pipeline including all classes, functions
+- The training pipeline is triggered when there is a new input data file added to a GCS bucket
+- The output of this is a final model object which is stored on a GCS bucket 
+- Kubeflow deployment pipeline is triggered by cloud functions which is invoked by a GCS trigger on receiving a new weekly file that needs to be scored
+- The serialized Model (ONNX) is deployed on Kubernetes  
+- Output of the scored features is stored in on a GCS bucket 
+- The client gets a message on success of predictions within the UI 
+- Visualization of entire end to end pipeline in Kubeflow 
 
 ### **Technologies**
 - Python, TensorFlow, & Keras (Need to add deep learning models)
@@ -49,7 +56,9 @@
 - Cloud storage trigger
 - Cloud functions
 - Docker
-- Seldon  
+- FastAPI
+- Uvicorn
+- Streamlit
 - Kubernetes
-- Vertex AI
+- K-serve
 
