@@ -1,17 +1,15 @@
-# integrates the processing, train and deploy pipeline
+# integrates the processing, train and deploy pipeline - The below is a template
 from google.cloud import aiplatform as aip
-
 from kfp.v2 import dsl
 from kfp.v2 import compiler
 from kfp.v2.dsl import component 
 from kfp.v2 import compiler
-
-from pipeline_components import (
-    processing,
-    train,
-)
-
-# where is this coming from? 
+# from component import (
+#     processing,
+#     train,
+#     deploy,
+#     serve
+# )
 
 import os 
 from dotenv import load_dotenv
@@ -30,9 +28,6 @@ PIPELINE_ROOT = "{}/pipeline_root/intro".format(PIPELINE_BUCKET_URI)
 # print(f"PIPELINE_ROOT DEBUG: {PIPELINE_ROOT}")
 
 @dsl.pipeline(
-
-
-
 
 )
 def pipeline(dest_bucket_uri: str, source_file: str):
