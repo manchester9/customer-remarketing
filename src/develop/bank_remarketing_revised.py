@@ -3,7 +3,7 @@
 
 # # Bank remarketing
 
-# In[47]:
+# In[105]:
 
 
 # Import libraries 
@@ -36,6 +36,7 @@ from keras.models import Sequential
 from keras.layers import Dense
 from keras.wrappers.scikit_learn import KerasClassifier
 from keras.layers import Dropout
+from sklearn.metrics import accuracy_score
 
 
 # ### 1. Loading data and holding a short Expanatory Data Analysis
@@ -232,7 +233,7 @@ gc.collect()
 display('check the shape of splitted train and test sets', X_train.shape, y_train.shape, X_test.shape, y_test.shape)
 
 
-# In[82]:
+# In[94]:
 
 
 # define the neural network model
@@ -240,14 +241,14 @@ num_features=X_train.shape[1]
 
 def create_nn(activation='relu', optimizer='adam', dropout_rate=0.2):
     model = Sequential()
-    model.add(Dense(10, input_dim=num_features, activation=activation.capitalize()))
+    model.add(Dense(10, input_dim=num_features, activation=activation.lower()))
     model.add(Dropout(dropout_rate))
     model.add(Dense(1, activation='sigmoid'))
     model.compile(loss='binary_crossentropy', optimizer=optimizer, metrics=['accuracy'])
     return model
 
 
-# In[83]:
+# In[95]:
 
 
 '''Build pipline of classifiers'''
@@ -269,7 +270,7 @@ pipe_sgd = Pipeline([('sgd', SGDClassifier(random_state=random_state, n_jobs=n_j
 pipe_nn = Pipeline([('NN', KerasClassifier(build_fn=create_nn, epochs=2, batch_size=16, activation='relu'))])
 
 
-# In[89]:
+# In[96]:
 
 
 pipeline = Pipeline([
@@ -285,7 +286,7 @@ print(pipe_nn.get_params().keys())
 print(pipe_nn.get_params().keys())
 
 
-# In[85]:
+# In[97]:
 
 
 '''Set parameters for Grid Search '''
@@ -334,7 +335,7 @@ grid_params_nn = [{
 }]
 
 
-# In[86]:
+# In[98]:
 
 
 '''Grid search objects'''
@@ -356,11 +357,12 @@ gs_bag = GridSearchCV(pipe_bag, param_grid=grid_params_bag,
 # for SGDClassifier
 gs_sgd = GridSearchCV(pipe_sgd, param_grid=grid_params_sgd,
                      scoring='accuracy', cv=cv)
+# for NeuralNet
 gs_nn = GridSearchCV(pipe_nn, param_grid=grid_params_nn,
                      scoring='accuracy', cv=cv)
 
 
-# In[87]:
+# In[99]:
 
 
 # models that we iterate over
@@ -369,7 +371,7 @@ look_for = [gs_lr, gs_rf, gs_knn, gs_dt, gs_bag, gs_sgd, gs_nn]
 model_dict = {0:'Logistic_reg', 1:'RandomForest', 2:'Knn', 3:'DesionTree', 4:'Bagging with SGDClassifier', 5:'SGD Class', 6: 'Neural Net'}
 
 
-# In[88]:
+# In[100]:
 
 
 ''' Function to iterate over models and obtain results'''
@@ -403,7 +405,7 @@ for index, model in enumerate(look_for):
 # ### 5. The choice of the most effective model, build learninig curve rate
 # 
 
-# In[23]:
+# In[101]:
 
 
 plt.plot(model_dict.values(), result_acc.values(), c='r')
@@ -416,7 +418,7 @@ plt.legend(['Accuracy', 'ROC_AUC'])
 plt.show();
 
 
-# In[24]:
+# In[102]:
 
 
 """ Model performance during Grid Search """
@@ -449,6 +451,31 @@ def graph(model, X_test, y_test):
     plt.show();
     
 graph(RandomForestClassifier, X_test, y_test)
+
+
+# In[106]:
+
+
+# Applying for neural net as well 
+def graph(model, X_train, y_train, X_val, y_val):
+    acc = []
+    est = list(range(2, 8))
+    for i in tqdm(est):
+        keras_model = KerasClassifier(build_fn=create_nn, epochs=i, batch_size=10, verbose=0)
+        keras_model.fit(X_train, y_train, validation_data=(X_val, y_val))
+        y_pred = keras_model.predict(X_val)
+        acc.append(accuracy_score(y_val, y_pred))
+    display('max accuracy {} and number of epochs {}'.format(max(acc), est[np.argmax(acc)]))
+    plt.plot(est, acc)
+    plt.title('model')
+    plt.xlabel('number of epochs')
+    plt.ylabel('accuracy score')
+    plt.show()
+
+# Split the training set into a smaller training set and a validation set
+X_train_small, X_val, y_train_small, y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=11)
+
+graph(KerasClassifier, X_train_small, y_train_small, X_val, y_val)
 
 
 # Let see the ROC_AUC graph
@@ -508,8 +535,31 @@ def build_feature_importance(model, X_train, y_train):
 build_feature_importance(RandomForestClassifier, X_train, y_train)
 
 
-# In[ ]:
+# In[113]:
 
 
+def build_feature_importance(model, X_train, y_train):
+    # Train the model
+    model.fit(X_train, y_train)
+    # Get feature importances
+    importances = model.model.feature_importances_
+    # Create dataframe
+    feature_importances = pd.DataFrame({'feature': X_train.columns, 'importance': importances})
+    # Sort by importance
+    feature_importances = feature_importances.sort_values('importance', ascending=False).reset_index(drop=True)
+    # Plot top 10 features
+    plt.figure(figsize=[6,6])
+    sns.barplot(x='feature', y='importance', data=feature_importances.head(10), palette="Blues_d")
+    plt.title('Feature Importance of Neural Network Model')
+    plt.xticks(rotation=45)
+    plt.show()
 
+
+# In[116]:
+
+
+# Get the best params
+best_params = model.best_params_
+model = KerasClassifier(build_fn=create_nn, **best_params)
+build_feature_importance(model, X_train, y_train)
 
