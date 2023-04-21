@@ -1,73 +1,28 @@
-# integrates the processing, train and deploy pipeline - The below is a template
-from google.cloud import aiplatform as aip
-from kfp.v2 import dsl
-from kfp.v2 import compiler
-from kfp.v2.dsl import component 
-from kfp.v2 import compiler
-# from component import (
-#     processing,
-#     train,
-#     deploy,
-#     serve
-# )
+import os
+import sys
+from src.exception import CustomException
+from src.logger import logging
+import pandas as pd
 
-import os 
-from dotenv import load_dotenv
+from sklearn.model_selection import train_test_split
+from dataclasses import dataclass
 
-load_dotenv()
-PROJECT_ID = os.getenv("PROJECT_ID")
-REGION = os.getenv("REGION")
-DEST_BUCKET_URI = os.getenv("DEST_BUCKET_URI")
-SOURCE_FILE = os.getenv("SOURCE_FILE")
-PIPELINE_BUCKET_URI = os.getenv("PIPELINE_BUCKET_URI")
-SERVICE_ACCOUNT = os.getenv("SERVICE_ACCOUNT")
+from src.components.ingestion import DataIngestionConfig
+from src.components.ingestion import DataIngestion
 
-# API service endpoint
-API_ENDPOINT = "{}-aiplatform.googleapis.com".format(REGION)
-PIPELINE_ROOT = "{}/pipeline_root/intro".format(PIPELINE_BUCKET_URI)
-# print(f"PIPELINE_ROOT DEBUG: {PIPELINE_ROOT}")
+from src.components.transformation import DataTransformation
+from src.components.transformation import DataTransformationConfig
 
-@dsl.pipeline(
+from src.components.trainer import ModelTrainerConfig
+from src.components.trainer import ModelTrainer
 
-)
-def pipeline(dest_bucket_uri: str, source_file: str):
-    processing(run_id = run_id, 
-                    dest_bucket_uri = dest_bucket_uri,
-                    source_file = source_file).\
-            set_cpu_limit('1').\
-            set_memory_limit('3G').\
-            set_display_name("Ingest Data & Perform EDA")#.\)
-    
+if __name__=="__main__":
+    obj=DataIngestion()
+    #obj.initiate_data_ingestion()
+    train_data,test_data=obj.initiate_data_ingestion()
 
-    train(run_id = run_id, 
-        dest_bucket_uri = dest_bucket_uri, 
-        source_file = source_file).\
-    set_display_name("Train Models").\
-    after(perform_eda_task)
+    data_transformation=DataTransformation()
+    train_arr,test_arr,_=data_transformation.initiate_data_transformation(train_data,test_data)
 
-    deploy()
-
-    predict()
-
-if __name__ == "__main__":
-    aip.init(project=PROJECT_ID, staging_bucket=PIPELINE_BUCKET_URI)
-
-    compiler.Compiler().compile(pipeline_func=pipeline, package_path="churn_pipeline.json")
-
-    DISPLAY_NAME = "churn_pipeline"
-
-    job = aip.PipelineJob(
-        display_name=DISPLAY_NAME,
-        template_path="churn_pipeline.json",
-        # pipeline_root is where information is saved off for every run
-        pipeline_root=PIPELINE_ROOT,
-        enable_caching=False,
-        parameter_values = {
-            "dest_bucket_uri": DEST_BUCKET_URI,
-            "source_file": SOURCE_FILE
-        }
-    )
-
-    print(type(job))
-
-    job.run()
+    modeltrainer=ModelTrainer()
+    print(modeltrainer.initiate_model_trainer(train_arr,test_arr))
