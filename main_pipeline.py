@@ -7,14 +7,14 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from dataclasses import dataclass
 
-from src.components.ingestion import DataIngestionConfig
-from src.components.ingestion import DataIngestion
+from src.ingestion.ingestion import DataIngestionConfig
+from src.ingestion.ingestion import DataIngestion
 
-from src.components.transformation import DataTransformation
-from src.components.transformation import DataTransformationConfig
+from src.transformation.transformation import DataTransformation
+from src.transformation.transformation import DataTransformationConfig
 
-from src.components.trainer import ModelTrainerConfig
-from src.components.trainer import ModelTrainer
+from src.train.trainer import ModelTrainerConfig
+from src.train.trainer import ModelTrainer
 
 if __name__=="__main__":
     obj=DataIngestion()
