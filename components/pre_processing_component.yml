@@ -1,16 +1,15 @@
-# train component
-name: Training
+name: Data Preprocessing
 description: |
-  Training
+  Prepare data for training
 inputs:
-- {name: input_data, description: 'Input path'}
+  - {name: input_data, description: 'Input path'}
 
 outputs:
-- {name: output_data, description: "output path"}
+  - {name: output_data, description: "output path"}
 implementation:
   container:
     image: jagadeeshj/customer-remarketing:v8
-    command: ['python3', 'src/train/trainer.py']
+    command: ['python3', 'src/transformation/transformation.py']
     args:
       - --input_folder
       - {inputPath: input_data}
