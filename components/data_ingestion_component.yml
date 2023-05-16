@@ -1,0 +1,17 @@
+name: Data Ingestion
+description: |
+  Download data and split into train and test 
+inputs:
+  - {name: input_data, description: 'Input path'}
+
+outputs:
+  - {name: output_data, description: "output path"}
+implementation:
+  container:
+    image: jagadeeshj/customer-remarketing:v8
+    command: ['python3', 'src/ingestion/ingestion.py']
+    args:
+      - --input_folder
+      - {inputPath: input_data}
+      - --output_folder
+      - {outputPath: output_data}
