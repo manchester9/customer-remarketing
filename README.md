@@ -55,6 +55,6 @@
 -	Kubeflow
 -	K-serve
 -	FastAPI-Uvicorn
--	Streamlit 
+-	Streamlit (Potential Dash implementation)
 
 
